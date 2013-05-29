@@ -1,0 +1,2 @@
+2013-05-29 17:24:56.888+0000 INFO  [org.neo4j]: Thread[main,5,main] Starting BatchInserter(EmbeddedBatchInserter[/Users/howarddierking/Dev/github.com/howarddierking/NuGetGraphLoader/./graph.db])
+2013-05-29 17:25:07.332+0000 INFO  [org.neo4j]: Thread[main,5,main] Clean shutdown on BatchInserter(EmbeddedBatchInserter[/Users/howarddierking/Dev/github.com/howarddierking/NuGetGraphLoader/./graph.db])
