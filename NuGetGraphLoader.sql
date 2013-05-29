@@ -265,10 +265,10 @@ go
 select 
 	n.EntityType,
 	n.LocalTableKey,
-	REPLACE(n.Users_Username, CHAR(13)+CHAR(10), ''),
-	REPLACE(n.Packages_Copyright, CHAR(13)+CHAR(10), ''),
+	REPLACE(REPLACE(n.Users_Username, CHAR(13), ''), CHAR(10), ''),
+	REPLACE(REPLACE(n.Packages_Copyright, CHAR(13), ''), CHAR(10), ''),
 	n.Packages_Created,
-	REPLACE(n.Packages_Description, CHAR(13)+CHAR(10), ''),
+	REPLACE(REPLACE(n.Packages_Description, CHAR(13), ''), CHAR(10), ''),
 	n.Packages_DownloadCount,
 	n.Packages_ExternalPackageUrl,
 	n.Packages_HashAlgorithm,
@@ -281,21 +281,21 @@ select
 	n.Packages_PackageFileSize,
 	n.Packages_ProjectUrl,
 	n.Packages_RequiresLicenseAcceptance,
-	REPLACE(n.Packages_Summary, CHAR(13)+CHAR(10), ''),
-	REPLACE(n.Packages_Tags, CHAR(13)+CHAR(10), ''),
-	REPLACE(n.Packages_Title, CHAR(13)+CHAR(10), ''),
+	REPLACE(REPLACE(n.Packages_Summary, CHAR(13), ''), CHAR(10), ''),
+	REPLACE(REPLACE(n.Packages_Tags, CHAR(13), ''), CHAR(10), ''),
+	REPLACE(REPLACE(n.Packages_Title, CHAR(13), ''), CHAR(10), ''),
 	n.Packages_Version,
 	n.Packages_FlattenedAuthors,
 	n.Packages_FlattenedDependencies,
 	n.Packages_IsLatestStable,
 	n.Packages_Listed,
 	n.Packages_IsPrerelease,
-	REPLACE(n.Packages_ReleaseNotes, CHAR(13)+CHAR(10), ''),
+	REPLACE(REPLACE(n.Packages_ReleaseNotes, CHAR(13), ''), CHAR(10), ''),
 	n.Packages_Language,
 	n.Packages_MinClientVersion,
-	REPLACE(n.PackageRegistrations_Id, CHAR(13)+CHAR(10), ''),
+	REPLACE(REPLACE(n.PackageRegistrations_Id, CHAR(13), ''), CHAR(10), ''),
 	n.PackageRegistrations_DownloadCount,
-	REPLACE(n.PackageAuthors_Name, CHAR(13)+CHAR(10), '')
+	REPLACE(REPLACE(n.PackageAuthors_Name, CHAR(13), ''), CHAR(10), '')
 from GRAPH_NODES n
 
 -- rels.csv
@@ -317,10 +317,10 @@ select
 	n.ID,
 	n.EntityType,
 	case
-		when n.EntityType='package_registration' then lower(REPLACE(n.PackageRegistrations_Id, CHAR(13)+CHAR(10), ''))
-		when n.EntityType='author' then lower(REPLACE(n.PackageAuthors_Name, CHAR(13)+CHAR(10), ''))
-		when n.EntityType='package' then lower(REPLACE(n.Packages_Title, CHAR(13)+CHAR(10), ''))
-		when n.EntityType='user' then lower(REPLACE(n.Users_Username, CHAR(13)+CHAR(10), ''))
+		when n.EntityType='package_registration' then lower(REPLACE(REPLACE(n.PackageRegistrations_Id, CHAR(13), ''), CHAR(10), ''))
+		when n.EntityType='author' then lower(REPLACE(REPLACE(n.PackageAuthors_Name, CHAR(13), ''), CHAR(10), ''))
+		when n.EntityType='package' then lower(REPLACE(REPLACE(n.Packages_Title, CHAR(13), ''), CHAR(10), ''))
+		when n.EntityType='user' then lower(REPLACE(REPLACE(n.Users_Username, CHAR(13), ''), CHAR(10), ''))
 	end EntityName
 from GRAPH_NODES n
 
