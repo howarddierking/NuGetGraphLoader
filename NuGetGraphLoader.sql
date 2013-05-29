@@ -260,15 +260,15 @@ go
 -- nodes.csv
 -- header query:
 -- select COLUMN_NAME from INFORMATION_SCHEMA.COLUMNS where TABLE_NAME = 'GRAPH_NODES'
--- ID	EntityType	LocalTableKey	Users_Username	Packages_Copyright	Packages_Created	Packages_Description	Packages_DownloadCount	Packages_ExternalPackageUrl	Packages_HashAlgorithm	Packages_Hash	Packages_IconUrl	Packages_IsLatest	Packages_LastUpdated	Packages_LicenseUrl	Packages_Published	Packages_PackageFileSize	Packages_ProjectUrl	Packages_RequiresLicenseAcceptance	Packages_Summary	Packages_Tags	Packages_Title	Packages_Version	Packages_FlattenedAuthors	Packages_FlattenedDependencies	Packages_IsLatestStable	Packages_Listed	Packages_IsPrerelease	Packages_ReleaseNotes	Packages_Language	Packages_MinClientVersion	PackageRegistrations_Id	PackageRegistrations_DownloadCount	PackageAuthors_Name
+-- EntityType	LocalTableKey	Users_Username	Packages_Copyright	Packages_Created	Packages_Description	Packages_DownloadCount	Packages_ExternalPackageUrl	Packages_HashAlgorithm	Packages_Hash	Packages_IconUrl	Packages_IsLatest	Packages_LastUpdated	Packages_LicenseUrl	Packages_Published	Packages_PackageFileSize	Packages_ProjectUrl	Packages_RequiresLicenseAcceptance	Packages_Summary	Packages_Tags	Packages_Title	Packages_Version	Packages_FlattenedAuthors	Packages_FlattenedDependencies	Packages_IsLatestStable	Packages_Listed	Packages_IsPrerelease	Packages_ReleaseNotes	Packages_Language	Packages_MinClientVersion	PackageRegistrations_Id	PackageRegistrations_DownloadCount	PackageAuthors_Name
 
 select 
 	n.EntityType,
 	n.LocalTableKey,
-	n.Users_Username,
-	n.Packages_Copyright,
+	REPLACE(n.Users_Username, CHAR(13)+CHAR(10), ''),
+	REPLACE(n.Packages_Copyright, CHAR(13)+CHAR(10), ''),
 	n.Packages_Created,
-	n.Packages_Description,
+	REPLACE(n.Packages_Description, CHAR(13)+CHAR(10), ''),
 	n.Packages_DownloadCount,
 	n.Packages_ExternalPackageUrl,
 	n.Packages_HashAlgorithm,
@@ -281,21 +281,21 @@ select
 	n.Packages_PackageFileSize,
 	n.Packages_ProjectUrl,
 	n.Packages_RequiresLicenseAcceptance,
-	n.Packages_Summary,
-	n.Packages_Tags,
-	n.Packages_Title,
+	REPLACE(n.Packages_Summary, CHAR(13)+CHAR(10), ''),
+	REPLACE(n.Packages_Tags, CHAR(13)+CHAR(10), ''),
+	REPLACE(n.Packages_Title, CHAR(13)+CHAR(10), ''),
 	n.Packages_Version,
 	n.Packages_FlattenedAuthors,
 	n.Packages_FlattenedDependencies,
 	n.Packages_IsLatestStable,
 	n.Packages_Listed,
 	n.Packages_IsPrerelease,
-	n.Packages_ReleaseNotes,
+	REPLACE(n.Packages_ReleaseNotes, CHAR(13)+CHAR(10), ''),
 	n.Packages_Language,
 	n.Packages_MinClientVersion,
-	n.PackageRegistrations_Id,
+	REPLACE(n.PackageRegistrations_Id, CHAR(13)+CHAR(10), ''),
 	n.PackageRegistrations_DownloadCount,
-	n.PackageAuthors_Name
+	REPLACE(n.PackageAuthors_Name, CHAR(13)+CHAR(10), '')
 from GRAPH_NODES n
 
 -- rels.csv
@@ -312,15 +312,15 @@ from GRAPH_RELS r
 
 -- entities_idx.csv
 -- entity types: author, package, package_registration, user
--- header: id	type	name
+-- id	type	name
 select 
 	n.ID,
 	n.EntityType,
 	case
-		when n.EntityType='package_registration' then n.PackageRegistrations_Id
-		when n.EntityType='author' then n.PackageAuthors_Name
-		when n.EntityType='package' then n.Packages_Title
-		when n.EntityType='user' then n.Users_Username
+		when n.EntityType='package_registration' then lower(REPLACE(n.PackageRegistrations_Id, CHAR(13)+CHAR(10), ''))
+		when n.EntityType='author' then lower(REPLACE(n.PackageAuthors_Name, CHAR(13)+CHAR(10), ''))
+		when n.EntityType='package' then lower(REPLACE(n.Packages_Title, CHAR(13)+CHAR(10), ''))
+		when n.EntityType='user' then lower(REPLACE(n.Users_Username, CHAR(13)+CHAR(10), ''))
 	end EntityName
 from GRAPH_NODES n
 
