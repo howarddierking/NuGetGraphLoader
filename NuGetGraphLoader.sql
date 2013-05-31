@@ -17,6 +17,7 @@ use [NuGet_Backup_20130417002350-2013-4-16-17-35]
 -- ==============================
 
 -- get the columns from different tables and generate the creation script
+/*
 select
 	case when CHARACTER_MAXIMUM_LENGTH is null then TABLE_NAME + '_' + COLUMN_NAME + ' ' + DATA_TYPE + ' NULL'  
 	else TABLE_NAME + '_' + COLUMN_NAME + ' ' + DATA_TYPE + '(' + CAST(CHARACTER_MAXIMUM_LENGTH as nvarchar) + ') NULL'
@@ -25,25 +26,34 @@ select
 from INFORMATION_SCHEMA.COLUMNS 
 where TABLE_NAME in ('PackageRegistrations', 'Packages', 'PackageAuthors', 'Users')
 order by TABLE_NAME desc
+*/
 
+drop table GRAPH_NODES
+
+go
+
+drop table GRAPH_RELS
+
+go
 
 -- =================================
 -- Create Nodes Table
 -- =================================
--- drop table GRAPH_NODES
 -- select count(*) from GRAPH_NODES
 
 create table GRAPH_NODES( 
 	ID				int	identity(1,1)	NOT NULL	primary key,
 	EntityType		varchar(20)			NOT NULL,
 	LocalTableKey	int					NOT NULL,
----combined columns ------------
+---combined columns ------------------
+	Combined_Downloads int NULL,
+
+---table-specific columns ------------
 	Users_Username nvarchar(64) NULL,
 
 	Packages_Copyright nvarchar(max) NULL,
 	Packages_Created datetime NULL,
 	Packages_Description nvarchar(max) NULL,
-	Packages_DownloadCount int NULL,
 	Packages_ExternalPackageUrl nvarchar(max) NULL,
 	Packages_HashAlgorithm nvarchar(10) NULL,
 	Packages_Hash nvarchar(256) NULL,
@@ -69,7 +79,6 @@ create table GRAPH_NODES(
 	Packages_MinClientVersion nvarchar(44) NULL,
 
 	PackageRegistrations_Id nvarchar(128) NULL,
-	PackageRegistrations_DownloadCount int NULL,
 
 	PackageAuthors_Name nvarchar(max) NULL
 )
@@ -94,7 +103,7 @@ go
 -- Package Registrations
 insert into GRAPH_NODES
 	(EntityType, LocalTableKey,
-	PackageRegistrations_DownloadCount,
+	Combined_Downloads,
 	PackageRegistrations_Id)
 select
 	'package_registration',
@@ -110,7 +119,7 @@ insert into GRAPH_NODES
 	Packages_Copyright, 
 	Packages_Created,
 	Packages_Description,
-	Packages_DownloadCount,
+	Combined_Downloads,
 	Packages_ExternalPackageUrl,
 	Packages_FlattenedAuthors,
 	Packages_FlattenedDependencies,
@@ -183,7 +192,6 @@ go
 -- ==============================
 -- Create relationships table
 -- ==============================
--- drop table GRAPH_RELS
 
 create table GRAPH_RELS
 (
@@ -260,67 +268,71 @@ go
 -- nodes.csv
 -- header query:
 -- select COLUMN_NAME from INFORMATION_SCHEMA.COLUMNS where TABLE_NAME = 'GRAPH_NODES'
--- EntityType	LocalTableKey	Users_Username	Packages_Copyright	Packages_Created	Packages_Description	Packages_DownloadCount	Packages_ExternalPackageUrl	Packages_HashAlgorithm	Packages_Hash	Packages_IconUrl	Packages_IsLatest	Packages_LastUpdated	Packages_LicenseUrl	Packages_Published	Packages_PackageFileSize	Packages_ProjectUrl	Packages_RequiresLicenseAcceptance	Packages_Summary	Packages_Tags	Packages_Title	Packages_Version	Packages_FlattenedAuthors	Packages_FlattenedDependencies	Packages_IsLatestStable	Packages_Listed	Packages_IsPrerelease	Packages_ReleaseNotes	Packages_Language	Packages_MinClientVersion	PackageRegistrations_Id	PackageRegistrations_DownloadCount	PackageAuthors_Name
+-- type	username	copyright	packageCreated	description	downloads	externalPackageUrl	hashAlgorithm	hash	iconUrl	isLatest	updated	licenseUrl	published	size	projectUrl	requiresLicenseAcceptance	summary	tags	title	version	flattenedAuthors	flattenedDependencies	isLatestStable	isListed	isPrerelease	releaseNotes	language	minClientVersion	packageId	name
 
 select 
-	n.EntityType,
-	n.LocalTableKey,
-	REPLACE(REPLACE(n.Users_Username, CHAR(13), ''), CHAR(10), ''),
-	REPLACE(REPLACE(n.Packages_Copyright, CHAR(13), ''), CHAR(10), ''),
-	n.Packages_Created,
-	REPLACE(REPLACE(n.Packages_Description, CHAR(13), ''), CHAR(10), ''),
-	n.Packages_DownloadCount,
-	n.Packages_ExternalPackageUrl,
-	n.Packages_HashAlgorithm,
-	n.Packages_Hash,
-	n.Packages_IconUrl,
-	n.Packages_IsLatest,
-	n.Packages_LastUpdated,
-	n.Packages_LicenseUrl,
-	n.Packages_Published,
-	n.Packages_PackageFileSize,
-	n.Packages_ProjectUrl,
-	n.Packages_RequiresLicenseAcceptance,
-	REPLACE(REPLACE(n.Packages_Summary, CHAR(13), ''), CHAR(10), ''),
-	REPLACE(REPLACE(n.Packages_Tags, CHAR(13), ''), CHAR(10), ''),
-	REPLACE(REPLACE(n.Packages_Title, CHAR(13), ''), CHAR(10), ''),
-	n.Packages_Version,
-	n.Packages_FlattenedAuthors,
-	n.Packages_FlattenedDependencies,
-	n.Packages_IsLatestStable,
-	n.Packages_Listed,
-	n.Packages_IsPrerelease,
-	REPLACE(REPLACE(n.Packages_ReleaseNotes, CHAR(13), ''), CHAR(10), ''),
-	n.Packages_Language,
-	n.Packages_MinClientVersion,
-	REPLACE(REPLACE(n.PackageRegistrations_Id, CHAR(13), ''), CHAR(10), ''),
-	n.PackageRegistrations_DownloadCount,
-	REPLACE(REPLACE(n.PackageAuthors_Name, CHAR(13), ''), CHAR(10), '')
+	ISNULL(n.EntityType,'')																	as [type],
+	ISNULL(REPLACE(REPLACE(n.Users_Username, CHAR(13), ''), CHAR(10), ''),'')					as [username],
+	ISNULL(REPLACE(REPLACE(n.Packages_Copyright, CHAR(13), ''), CHAR(10), ''),'')			as copyright,
+	ISNULL(CAST(n.Packages_Created as nvarchar(50)),'')															as created,
+	ISNULL(REPLACE(REPLACE(n.Packages_Description, CHAR(13), ''), CHAR(10), ''),'')			as [description],
+	ISNULL(CAST(n.Combined_Downloads as nvarchar(50)),'')															as downloads,
+	ISNULL(n.Packages_ExternalPackageUrl,'')												as externalPackageUrl,
+	ISNULL(n.Packages_HashAlgorithm,'')														as hashAlgorithm,
+	ISNULL(n.Packages_Hash,'')																as [hash],
+	ISNULL(n.Packages_IconUrl,'')															as iconUrl,
+	ISNULL(CAST(n.Packages_IsLatest as nvarchar(10)),'')															as isLatest,
+	ISNULL(CAST(n.Packages_LastUpdated as nvarchar(50)),'')														as updated,
+	ISNULL(n.Packages_LicenseUrl,'')														as licenseUrl,
+	ISNULL(CAST(n.Packages_Published as nvarchar(50)),'')															as published,
+	ISNULL(CAST(n.Packages_PackageFileSize as nvarchar(25)),'')													as size,
+	ISNULL(n.Packages_ProjectUrl,'')														as projectUrl,
+	ISNULL(CAST(n.Packages_RequiresLicenseAcceptance as nvarchar(10)),'')											as requiresLicenseAcceptance,
+	ISNULL(REPLACE(REPLACE(n.Packages_Summary, CHAR(13), ''), CHAR(10), ''),'')				as summary,
+	ISNULL(REPLACE(REPLACE(n.Packages_Tags, CHAR(13), ''), CHAR(10), ''),'')				as tags,
+	ISNULL(REPLACE(REPLACE(n.Packages_Title, CHAR(13), ''), CHAR(10), ''),'')				as title,
+	ISNULL(n.Packages_Version,'')															as [version],
+	ISNULL(n.Packages_FlattenedAuthors,'')													as flattenedAuthors,
+	ISNULL(n.Packages_FlattenedDependencies,'')												as flattenedDependencies,
+	ISNULL(CAST(n.Packages_IsLatestStable as nvarchar(10)),'')													as isLatestStable,
+	ISNULL(CAST(n.Packages_Listed as nvarchar(10)),'')															as isListed,
+	ISNULL(CAST(n.Packages_IsPrerelease as nvarchar(10)),'')														as isPrerelease,
+	ISNULL(REPLACE(REPLACE(n.Packages_ReleaseNotes, CHAR(13), ''), CHAR(10), ''),'')		as releaseNotes,
+	ISNULL(n.Packages_Language,'')															as [language],
+	ISNULL(n.Packages_MinClientVersion,'')													as minClientVersion,
+	ISNULL(REPLACE(REPLACE(n.PackageRegistrations_Id, CHAR(13), ''), CHAR(10), ''),'')		as packageId,
+	ISNULL(REPLACE(REPLACE(n.PackageAuthors_Name, CHAR(13), ''), CHAR(10), ''),'')			as name
 from GRAPH_NODES n
+
+go 
 
 -- rels.csv
 -- header query:
 -- select COLUMN_NAME from INFORMATION_SCHEMA.COLUMNS where TABLE_NAME = 'GRAPH_RELS'
--- start	end	type	VersionSpec	TargetFramework
+-- start	end	type	versionSpec	targetFramework
 select 
-	r.start,
-	r.[end],
-	r.[type],
-	r.VersionSpec,
-	r.TargetFramework
+	r.start							as start,
+	r.[end]							as [end],
+	r.[type]						as [type],
+	ISNULL(r.VersionSpec,'')		as versionSpec,
+	ISNULL(r.TargetFramework,'')	as targetFramework
 from GRAPH_RELS r
+
+go 
 
 -- entities_idx.csv
 -- entity types: author, package, package_registration, user
 -- id	type	name
-select 
-	n.ID,
-	n.EntityType,
+select * from 
+(select 
+	n.ID as [id],
+	n.EntityType as [type],
 	case
 		when n.EntityType='package_registration' then lower(REPLACE(REPLACE(n.PackageRegistrations_Id, CHAR(13), ''), CHAR(10), ''))
 		when n.EntityType='author' then lower(REPLACE(REPLACE(n.PackageAuthors_Name, CHAR(13), ''), CHAR(10), ''))
 		when n.EntityType='package' then lower(REPLACE(REPLACE(n.Packages_Title, CHAR(13), ''), CHAR(10), ''))
 		when n.EntityType='user' then lower(REPLACE(REPLACE(n.Users_Username, CHAR(13), ''), CHAR(10), ''))
-	end EntityName
-from GRAPH_NODES n
+	end name
+from GRAPH_NODES n) sub
+where sub.name is not null
 
